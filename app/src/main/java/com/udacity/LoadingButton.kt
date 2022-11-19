@@ -14,6 +14,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.core.content.withStyledAttributes
 import kotlin.properties.Delegates
 
 class LoadingButton @JvmOverloads constructor(
@@ -22,6 +23,10 @@ class LoadingButton @JvmOverloads constructor(
     private var widthSize = 0
     private var heightSize = 0
 
+    private var defaultButtonColor = 0
+private var animatedButtonColor = 0
+    private var circleColor = 0
+    private var textColor = 0
 
     private var valueAnimator = ValueAnimator()
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -62,12 +67,12 @@ class LoadingButton @JvmOverloads constructor(
             }
             ButtonState.Completed -> {
                 valueAnimator.end()
-                setColor(resources.getColor(R.color.colorPrimary))
+                setColor(defaultButtonColor)
 
 
             }
             else -> {
-                setColor(resources.getColor(R.color.colorPrimary))
+                setColor(defaultButtonColor)
             }
         }
     }
@@ -80,12 +85,18 @@ class LoadingButton @JvmOverloads constructor(
     init {
 
         isClickable = true
+        context.withStyledAttributes(attrs , R.styleable.LoadingButton){
+            defaultButtonColor = getColor(R.styleable.LoadingButton_defaultColor , 0)
+            animatedButtonColor = getColor(R.styleable.LoadingButton_animatedColor , 0)
+            circleColor = getColor(R.styleable.LoadingButton_circleColor , 0)
+            textColor= getColor(R.styleable.LoadingButton_btnTextColor , 0)
+        }
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-        canvas?.drawColor(ContextCompat.getColor(context, R.color.colorPrimary))
+        canvas?.drawColor(defaultButtonColor)
         if (buttonState == ButtonState.Clicked) {
             drawAnimation(canvas)
 
@@ -97,14 +108,14 @@ class LoadingButton @JvmOverloads constructor(
     fun drawUI(canvas: Canvas?) {
         canvas?.drawRect(
             0f, 0f, widthSize.toFloat(), heightSize.toFloat(),
-            backgroundPaint.apply { resources.getColor(R.color.colorPrimary) })
+            backgroundPaint.apply { color = defaultButtonColor })
 
         canvas?.drawText(
             context.getString(R.string.download),
             widthSize.toFloat() / 2,
             ((heightSize.toFloat() / 2) - ((textPaint.descent() + textPaint.ascent()) / 2)),
 
-            textPaint.apply { color = Color.WHITE })
+            textPaint.apply { color = textColor })
 
     }
 
@@ -115,7 +126,7 @@ class LoadingButton @JvmOverloads constructor(
             0f,
             progress * widthSize.toFloat(),
             measuredHeight.toFloat(),
-            backgroundPaint.apply { color = resources.getColor(R.color.colorPrimaryDark) })
+            backgroundPaint.apply { color =animatedButtonColor})
 
 // Draw Text
         canvas?.drawText(
@@ -123,14 +134,14 @@ class LoadingButton @JvmOverloads constructor(
             widthSize.toFloat() / 2,
             ((heightSize.toFloat() / 2) - ((textPaint.descent() + textPaint.ascent()) / 2)),
 
-            textPaint.apply { color = Color.WHITE })
+            textPaint.apply { color = textColor })
 // Draw animated Circle
         canvas?.drawArc(
             675f, 80f, 725f, 130f,
             0f,
             progress * 360f,
             true,
-            backgroundPaint.apply { color = resources.getColor(R.color.colorAccent) })
+            backgroundPaint.apply { color = circleColor })
 
     }
 
