@@ -13,6 +13,7 @@ import android.graphics.Typeface
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
+import androidx.core.content.ContextCompat
 import kotlin.properties.Delegates
 
 class LoadingButton @JvmOverloads constructor(
@@ -20,8 +21,7 @@ class LoadingButton @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
     private var widthSize = 0
     private var heightSize = 0
-    private val rect = RectF(50f, 50f, 900f, 700f)
-    private val smallRect = RectF(650f, 110f, 700f, 160f)
+
 
     private var valueAnimator = ValueAnimator()
     private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -37,7 +37,7 @@ class LoadingButton @JvmOverloads constructor(
         typeface = Typeface.create("", Typeface.BOLD)
     }
 
-    var progress = 0
+    var progress = 0F
 
 
     var buttonState: ButtonState by Delegates.observable(ButtonState.Completed) { p, old, new ->
@@ -48,18 +48,14 @@ class LoadingButton @JvmOverloads constructor(
     private fun onButtonStateChanged(buttonState: ButtonState) {
         when (buttonState) {
             ButtonState.Clicked -> {
-                valueAnimator = ValueAnimator()
+                valueAnimator = ValueAnimator.ofFloat(0f, 1f)
 
-                valueAnimator.setIntValues(
-                    50, 900
-                )
-                valueAnimator.setEvaluator(IntEvaluator())
                 valueAnimator.addUpdateListener { valueAnimator ->
-                    progress = valueAnimator.animatedValue as Int
+                    progress = valueAnimator.animatedValue as Float
                     Log.d("progress", progress.toString())
                     invalidate()
                 }
-                valueAnimator.duration = 1000
+                valueAnimator.duration = 1500
                 valueAnimator.repeatCount = ValueAnimator.INFINITE
                 valueAnimator.start()
 
@@ -82,39 +78,60 @@ class LoadingButton @JvmOverloads constructor(
     }
 
     init {
+
         isClickable = true
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
-        canvas?.drawRect(rect, backgroundPaint.apply { resources.getColor(R.color.colorPrimary) })
 
+        canvas?.drawColor(ContextCompat.getColor(context, R.color.colorPrimary))
         if (buttonState == ButtonState.Clicked) {
-
-            canvas?.drawRect(
-                50f,
-                50f,
-                progress.toFloat(),
-                measuredHeight.toFloat(),
-                backgroundPaint.apply { color = resources.getColor(R.color.colorPrimaryDark) })
-
-            canvas?.drawArc(
-                smallRect,
-                0f,
-                360f,
-                true,
-                backgroundPaint.apply { color = resources.getColor(R.color.colorAccent) })
-            canvas?.drawText(
-                context.getString(R.string.button_loading),
-                460f,
-                150f,
-                textPaint.apply { color = Color.WHITE })
+            drawAnimation(canvas)
 
         } else {
-
-            canvas?.drawText(context.getString(R.string.download), 460f, 150f, textPaint.apply { color = Color.WHITE })
-
+            drawUI(canvas)
         }
+    }
+
+    fun drawUI(canvas: Canvas?) {
+        canvas?.drawRect(
+            0f, 0f, widthSize.toFloat(), heightSize.toFloat(),
+            backgroundPaint.apply { resources.getColor(R.color.colorPrimary) })
+
+        canvas?.drawText(
+            context.getString(R.string.download),
+            widthSize.toFloat() / 2,
+            ((heightSize.toFloat() / 2) - ((textPaint.descent() + textPaint.ascent()) / 2)),
+
+            textPaint.apply { color = Color.WHITE })
+
+    }
+
+    fun drawAnimation(canvas: Canvas?) {
+        // Draw Rect
+        canvas?.drawRect(
+            0f,
+            0f,
+            progress * widthSize.toFloat(),
+            measuredHeight.toFloat(),
+            backgroundPaint.apply { color = resources.getColor(R.color.colorPrimaryDark) })
+
+// Draw Text
+        canvas?.drawText(
+            context.getString(R.string.button_loading),
+            widthSize.toFloat() / 2,
+            ((heightSize.toFloat() / 2) - ((textPaint.descent() + textPaint.ascent()) / 2)),
+
+            textPaint.apply { color = Color.WHITE })
+// Draw animated Circle
+        canvas?.drawArc(
+            675f, 80f, 725f, 130f,
+            0f,
+            progress * 360f,
+            true,
+            backgroundPaint.apply { color = resources.getColor(R.color.colorAccent) })
+
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
